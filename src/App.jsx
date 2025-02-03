@@ -115,7 +115,7 @@ function App() {
     );
     let todoToFind = todos.find(todo=> todo.id === todoToDelete);
     if(todoToFind){
-      setDeletedTodo([...deletedTodo, {id: uuidv4(), name: todoToFind.name, time: todoToFind.time}]);
+      setDeletedTodo([...deletedTodo, {id: uuidv4(), name: todoToFind.name, time: todoToFind.time, isCompleted: true, fadeOut: false}]);
     }
   
     // Remove the todo after the fade-out duration
@@ -136,6 +136,29 @@ function App() {
 
   const deleteAll = ()=> {
     setDeletedTodo([]);
+  }
+
+  const handleRestore = (e, id)=> {
+    console.log(e, id);
+    let todoToRestore = deletedTodo.find(todo => todo.id === id);
+    if (!todoToRestore) return;
+
+      setDeletedTodo((prevTodos) => prevTodos.map((todo) =>
+        todo.id === id
+          ? { ...todo, isCompleted: !todo.isCompleted, fadeOut: !todo.isCompleted }
+          : todo
+      )
+    );
+
+    // Add restored todo with fade-in effect
+    setTodos([...todos, {id: id, name: e.name, time: e.time, isCompleted: false, fadeOut: false }]);
+
+    // Remove from deleted list after animation
+    setTimeout(() => {
+      setDeletedTodo(prevDeleted => prevDeleted.filter(todo => todo.id !== id));
+    }, 500);
+    sortTodosByTime();
+    saveToLS();
   }
   
 
@@ -189,17 +212,18 @@ function App() {
               return ( 
                 <div
                   key={todo.id}
-                  className={`flex items-center justify-between text-white bg-[rgb(31,33,37)] p-3 rounded-xl transition-all duration-500 ease-in cursor-not-allowed`}
+                  onClick={()=> handleRestore(todo, todo.id)}
+                  className={`flex items-center justify-between text-white bg-[rgb(31,33,37)] p-3 rounded-xl transition-all duration-500 ease-in cursor-pointer ${todo.fadeOut ? 'opacity-0' : ''}`}
                 >
                   <div className="flex items-center gap-x-2">
                     <div className="relative inline-block w-5 h-5">
                       <input
                         type="checkbox"
-                        className={`absolute w-full h-full appearance-none rounded-full border-2 bg-white border-[#12b8ae] ring-2 ring-[#12b8ae] ring-inset cursor-not-allowed`}/>
+                        className={`absolute w-full h-full appearance-none rounded-full border-2 bg-[rgb(31,33,37)] cursor-pointer ${todo.isCompleted ? "bg-white border-[#12b8ae] ring-2 ring-[#12b8ae] ring-inset" : ""}`}/>
                     </div>
-                    <span className={`line-through text-[rgb(145,142,142)] text-[18px]`}>{todo.name}</span>
+                    <span className={`${todo.isCompleted ? "line-through text-[rgb(145,142,142)]" : ""} text-[18px]`}>{todo.name}</span>
                   </div>
-                  <span className={`text-[rgb(145,142,142)] text-[14px] font-light`}>{todo.time}</span>
+                  <span className={`${todo.isCompleted ? "text-[rgb(145,142,142)]": ""} text-[14px] font-light`}>{todo.time}</span>
                 </div>
               );
             })}
